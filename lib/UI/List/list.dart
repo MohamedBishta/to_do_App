@@ -59,7 +59,7 @@ class ListTab extends StatelessWidget {
                       height: 10,
                     ),
                     Text(
-                      "Task Desxription",
+                      "Task Description",
                       style: TextStyle(fontSize: 18),
                     ),
                   ],

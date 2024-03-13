@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:to_do_list/Core/Utilites/firebase_error_codes.dart';
 import 'package:to_do_list/Core/Utilites/myValidation.dart';
 import 'package:to_do_list/UI/Auth/Login/Login.dart';
 import 'package:to_do_list/UI/Componant/CustomTextFormField.dart';
@@ -15,6 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   TextEditingController? fullNameController = TextEditingController();
 
   TextEditingController? emailController = TextEditingController();
+
+  TextEditingController? ageController = TextEditingController();
 
   TextEditingController? passwordController = TextEditingController();
 
@@ -63,10 +67,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   CustomTextFormField(
                     decoration: InputDecoration(
+                      labelText: "Age :",
+                    ),
+                    validator: (age) {
+                      if (age == null || age.trim().isEmpty)
+                        return "Please Enter Vaild Age ";
+                    },
+                    controller: ageController,
+                  ),
+                  CustomTextFormField(
+                    decoration: InputDecoration(
                       labelText: "Password :",
                     ),
                     validator: (password) {
-                      if (password == null || password.trim().isEmpty)
+                      if (password == null || password.isEmpty)
                         return "Please Enter Vaild Password";
                       MyValidations.validatePassword(password);
                       if (password.length < 6) {
@@ -79,15 +93,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: InputDecoration(
                       labelText: "Confirm Password :",
                     ),
-                    validator: (password) {
-                      if (password == null || password.trim().isEmpty) {
+                    validator: (confpassword) {
+                      if (confpassword == null || confpassword.isEmpty) {
                         return "Please Enter Vaild Password";
                       }
-                      if (password != passwordController) {
+                      if (confpassword != passwordController) {
                         return "Password doesn't match";
                       }
-
-                      MyValidations.validatePassword(password);
+                      MyValidations.validatePassword(confpassword);
                     },
                     controller: confirmPasswordController,
                   ),
@@ -99,8 +112,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         backgroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
-                    onPressed: () {
+                    onPressed: () async {
                       isValidate();
+                      try {
+                        final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                          email: emailController!.text.trim(),
+                          password: passwordController!.text,
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        if (e.code == ErrorCodes.weakPassword) {
+                          print('The password provided is too weak.');
+                        } else if (e.code == ErrorCodes.emailExist) {
+                          print('The account already exists for that email.');
+                        }
+                      } catch (e) {
+                        print(e);
+                      }
                     },
                     child: Text(
                       "Create Account",
