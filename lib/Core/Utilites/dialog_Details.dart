@@ -21,18 +21,18 @@ class DialogUtils{
     String? negativeTitle, void Function()? negativeClick
   }){
     showDialog(context: context, builder: (context) => AlertDialog(
-      content: Row(children: [
-        Text(message),
-      ],),
+      content: Text(message),
       actions: [
         if(positiveTitle!=null)
-        TextButton(onPressed: (){
-          positiveClick;
-        }, child: Text(positiveTitle??"")),
+            TextButton(
+            onPressed: (){positiveClick!();},
+              child: Text(positiveTitle??"")
+            ),
         if(negativeTitle!=null)
-          TextButton(onPressed: () {
-            negativeClick;
-          }, child: Text(negativeTitle??""))
+            TextButton(
+              onPressed: (){negativeClick!();},
+                child: Text(negativeTitle??"")
+            ),
       ],
     ),);
   }

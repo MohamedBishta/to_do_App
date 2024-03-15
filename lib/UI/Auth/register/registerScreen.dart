@@ -5,6 +5,8 @@ import 'package:to_do_list/Core/Utilites/myValidation.dart';
 import 'package:to_do_list/UI/Auth/Login/Login.dart';
 import 'package:to_do_list/UI/Componant/CustomTextFormField.dart';
 
+import '../../../Core/Utilites/dialog_Details.dart';
+
 class RegisterScreen extends StatefulWidget {
   static const String routeName = 'register';
   RegisterScreen({super.key});
@@ -115,18 +117,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: () async {
                       isValidate();
                       try {
+                        DialogUtils.showLoadingDialog(context: context);
                         final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
                           email: emailController!.text.trim(),
                           password: passwordController!.text,
                         );
+                        DialogUtils.hidenDialog(context: context);
+                        DialogUtils.showErrorDialog(context: context, message: "Register successfuly ${credential.user!.uid}",
+                          positiveTitle: "ok",
+                          positiveClick: (){
+                           DialogUtils.hidenDialog(context: context);
+                           Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+                          }
+                        );
                       } on FirebaseAuthException catch (e) {
+                        DialogUtils.hidenDialog(context: context);
                         if (e.code == ErrorCodes.weakPassword) {
-                          print('The password provided is too weak.');
+                          DialogUtils.showErrorDialog(context: context, message: "The password provided is too weak.",
+                              positiveTitle: "ok",
+                              positiveClick: (){
+                                DialogUtils.hidenDialog(context: context);
+                              }
+                          );
                         } else if (e.code == ErrorCodes.emailExist) {
-                          print('The account already exists for that email.');
+                          DialogUtils.showErrorDialog(context: context, message: 'The account already exists for that email.',
+                              positiveTitle: "ok",
+                              positiveClick: (){
+                                DialogUtils.hidenDialog(context: context);
+                              }
+                          );
                         }
                       } catch (e) {
-                        print(e);
+                        DialogUtils.hidenDialog(context: context);
+                        DialogUtils.showErrorDialog(context: context, message: e.toString() ,
+                            positiveTitle: "ok",
+                            positiveClick: (){
+                              DialogUtils.hidenDialog(context: context);
+                            }
+                        );
                       }
                     },
                     child: Text(
@@ -154,6 +182,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (formKey.currentState?.validate() == false) {
       return;
     }
-    Navigator.pushReplacementNamed(context, LoginScreen.routeName);
   }
 }

@@ -89,10 +89,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           positiveTitle: "ok",
                           positiveClick: () {
                             DialogUtils.hidenDialog(context: context);
+                            Navigator.pushReplacementNamed(context, HomePage.routeName);
                           },
                         );
-                        Navigator.pushReplacementNamed(context, HomePage.routeName);
                       } on FirebaseAuthException catch (e) {
+                        DialogUtils.hidenDialog(context: context);
                         if (e.code == ErrorCodes.userNotFound) {
                           DialogUtils.showErrorDialog(
                               context: context,
