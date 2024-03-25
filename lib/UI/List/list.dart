@@ -1,12 +1,25 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
-import 'package:to_do_list/Core/Utilites/appColors.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list/Core/Providers/AuthProvider.dart';
+import 'package:to_do_list/Core/firestore_helper.dart';
+import 'package:to_do_list/Model/tasks.dart';
+import 'package:to_do_list/UI/List/taskItem.dart';
 
-class ListTab extends StatelessWidget {
-  const ListTab({super.key});
+class ListTab extends StatefulWidget {
+  ListTab({super.key});
+
+  @override
+  State<ListTab> createState() => _ListTabState();
+}
+
+class _ListTabState extends State<ListTab> {
+  DateTime mySelectedData = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
+    AuthUserProvider provider = Provider.of<AuthUserProvider>(context);
     return Container(
       color: Color(0xffdce9da),
       child: Column(
@@ -14,7 +27,8 @@ class ListTab extends StatelessWidget {
           EasyDateTimeLine(
             initialDate: DateTime.now(),
             onDateChange: (selectedDate) {
-              //`selectedDate` the new date selected.
+              mySelectedData = selectedDate;
+              setState(() {});
             },
             headerProps: const EasyHeaderProps(
               monthPickerType: MonthPickerType.switcher,
@@ -37,121 +51,33 @@ class ListTab extends StatelessWidget {
               ),
             ),
           ),
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            margin: EdgeInsets.only(left: 20,right: 20,top: 20),
-            child: Row(
-              children: [
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  width: 5,
-                  height: 90,
-                  color: AppColors.primaryColor,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Task Title",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Task Description",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-                Spacer(),
-               Container(
-                 decoration: BoxDecoration(
-                   color: Colors.blue,
-                     borderRadius: BorderRadius.circular(10)),
-                 margin: EdgeInsets.symmetric(horizontal: 20),
-                 height: 35,
-                   width: 50,
-                   child: Icon(Icons.check,color: Colors.black,)),
-              ],
-            ),
-          ),
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            margin: EdgeInsets.only(left: 20,right: 20,top: 20),
-            child: Row(
-              children: [
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  width: 5,
-                  height: 90,
-                  color: AppColors.primaryColor,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Task Title",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Task Desxription",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-                Spacer(),
-               Container(
-                 decoration: BoxDecoration(
-                   color: Colors.blue,
-                     borderRadius: BorderRadius.circular(10)),
-                 margin: EdgeInsets.symmetric(horizontal: 20),
-                 height: 35,
-                   width: 50,
-                   child: Icon(Icons.check,color: Colors.black,)),
-              ],
-            ),
-          ),
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            margin: EdgeInsets.only(left: 20,right: 20,top: 20),
-            child: Row(
-              children: [
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  width: 5,
-                  height: 90,
-                  color: AppColors.primaryColor,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Task Title",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Text(
-                      "Task Desxription",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-                Spacer(),
-               Container(
-                 decoration: BoxDecoration(
-                   color: Colors.blue,
-                     borderRadius: BorderRadius.circular(10)),
-                 margin: EdgeInsets.symmetric(horizontal: 20),
-                 height: 35,
-                   width: 50,
-                   child: Icon(Icons.check,color: Colors.black,)),
-              ],
+          Expanded(
+            child: StreamBuilder(
+              stream: FirestoreHelper.listenToTasks(
+                  provider.authUser!.uid,
+                  Timestamp.fromMillisecondsSinceEpoch(
+                      mySelectedData.millisecondsSinceEpoch)),
+              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Column(
+                    children: [
+                      Text("Something went wrong"),
+                      ElevatedButton(onPressed: () {}, child: Text("try again"))
+                    ],
+                  );
+                }
+                List<Tasks> tasks = snapshot.data ?? [];
+                return ListView.builder(
+                    itemBuilder: (context, index) => TaskItem(
+                          tasks: tasks[index],
+                        ),
+                    itemCount: tasks.length);
+              },
             ),
           ),
         ],

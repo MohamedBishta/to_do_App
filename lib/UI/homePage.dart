@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:to_do_list/Core/Utilites/appColors.dart';
+import 'package:to_do_list/Core/Utilites/dialog_Details.dart';
+import 'package:to_do_list/UI/Auth/Login/Login.dart';
 import 'package:to_do_list/UI/List/list.dart';
 import 'package:to_do_list/UI/List/taskBottomSheet.dart';
 import 'package:to_do_list/UI/Settings/setting.dart';
@@ -15,7 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
 
-  var tabs =[
+  var tabs = [
     ListTab(),
     SettingTab(),
   ];
@@ -29,12 +32,42 @@ class _HomePageState extends State<HomePage> {
         title: Text(
           "To do App",
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              DialogUtils.showErrorDialog(
+                context: context,
+                message: "Are you Sure you Want to Loged out",
+                positiveTitle: "Ok",
+                positiveClick: () {
+                  FirebaseAuth.instance.signOut();
+                  Navigator.pop(context);
+                  Navigator.pushReplacementNamed(
+                      context, LoginScreen.routeName);
+                },
+                negativeTitle: "Cancel",
+                negativeClick: (){
+                  Navigator.pop(context);
+                },
+              );
+            },
+            icon: Icon(
+              Icons.exit_to_app,
+              size: 20,
+            ),
+            color: Colors.white,
+          )
+        ],
       ),
       body: tabs[selectedIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        shape: StadiumBorder(side: BorderSide(color: AppColors.whiteColor,width: 4)),
-        child: Icon(Icons.add,color: Colors.white,),
+        shape: StadiumBorder(
+            side: BorderSide(color: AppColors.whiteColor, width: 4)),
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
         backgroundColor: AppColors.primaryColor,
         onPressed: () {
           addTaskBottomSheet();
@@ -46,44 +79,47 @@ class _HomePageState extends State<HomePage> {
         child: BottomNavigationBar(
           backgroundColor: Colors.transparent,
           currentIndex: selectedIndex,
-            onTap: (index) {
-              setState(() {
-                selectedIndex = index;
-              });
-            },
-            elevation: 0.0,
-            items: [
-              BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.list,
-                    size: 35,
-                  ),
-                  label: ""),
-              BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.settings,
-                    size: 35,
-                  ),
-                  label: ""),
-            ],
-          ),
+          onTap: (index) {
+            setState(() {
+              selectedIndex = index;
+            });
+          },
+          elevation: 0.0,
+          items: [
+            BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.list,
+                  size: 35,
+                ),
+                label: ""),
+            BottomNavigationBarItem(
+                icon: Icon(
+                  Icons.settings,
+                  size: 35,
+                ),
+                label: ""),
+          ],
+        ),
       ),
     );
   }
 
-  void addTaskBottomSheet() async{
-      await showModalBottomSheet(
-        isScrollControlled: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        )),
-        context: context, builder: (context) {
+  void addTaskBottomSheet() async {
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      )),
+      context: context,
+      builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
           child: AddTaskBottomSheet(),
         );
-    },);
-
+      },
+    );
   }
 }

@@ -1,6 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list/Core/Providers/AuthProvider.dart';
 import 'package:to_do_list/Core/Utilites/appColors.dart';
+import 'package:to_do_list/Core/Utilites/dialog_Details.dart';
+import 'package:to_do_list/Core/firestore_helper.dart';
+import 'package:to_do_list/Model/tasks.dart';
 import 'package:to_do_list/UI/Componant/CustomTextFormField.dart';
+
 class AddTaskBottomSheet extends StatefulWidget {
   AddTaskBottomSheet({super.key});
 
@@ -11,11 +18,11 @@ class AddTaskBottomSheet extends StatefulWidget {
 class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   TextEditingController titleController = TextEditingController();
 
-  TextEditingController describtionController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
 
-  var myKey = GlobalKey<FormState>() ;
+  var myKey = GlobalKey<FormState>();
 
-  DateTime selectedData = DateTime.now() ;
+  DateTime selectedData = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +40,9 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20),
             ),
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             CustomTextFormField(
               decoration: InputDecoration(
                 labelText: "Title :",
@@ -46,12 +55,14 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
               ),
               controller: titleController,
               validator: (text) {
-                if(text == null || text.trim().isEmpty){
-                  return "Please Enter title" ;
+                if (text == null || text.trim().isEmpty) {
+                  return "Please Enter title";
                 }
               },
             ),
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             CustomTextFormField(
               decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
@@ -62,50 +73,71 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       borderRadius: BorderRadius.circular(30)),
                   labelText: "Description :",
                   hintText: "add description"),
-              controller: describtionController,
+              controller: descriptionController,
               validator: (text) {
-                if(text == null || text.trim().isEmpty){
-                  return "Please Enter description" ;
+                if (text == null || text.trim().isEmpty) {
+                  return "Please Enter description";
                 }
               },
               MaxLines: 3,
               MinLines: 3,
             ),
-            SizedBox(height: 20,),
+            SizedBox(
+              height: 20,
+            ),
             Text("Selected Data :"),
-            SizedBox(height: 10,),
-            Center(child: InkWell(
-              onTap: () {
-                showTaskDataPicker();
-              },
-                child: Text("${showDataTimeFormate(selectedData)}"))),
-            SizedBox(height: 10,),
-            ElevatedButton(onPressed: () {
-              addTask();
-            }, child: Text("Add Task"))
-
+            SizedBox(
+              height: 10,
+            ),
+            Center(
+                child: InkWell(
+                    onTap: () {
+                      showTaskDataPicker();
+                    },
+                    child: Text("${showDataTimeFormate(selectedData)}"))),
+            SizedBox(
+              height: 10,
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  addTask();
+                },
+                child: Text("Add Task"))
           ],
         ),
       ),
     );
   }
 
-   showDataTimeFormate(DateTime dataTime){
+  showDataTimeFormate(DateTime dataTime) {
     return ("${dataTime.year}-${dataTime.month}-${dataTime.day}");
   }
 
-  void showTaskDataPicker()async {
+  void showTaskDataPicker() async {
     var date = await showDatePicker(
-      initialDate: selectedData,
-        context: context, firstDate: DateTime.now(), lastDate: DateTime.now().add(Duration(days: 365)));
-    if(date == null)return ;
-    selectedData = date ;
-    setState(() {
-
-    });
+        initialDate: selectedData,
+        context: context,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(Duration(days: 365)));
+    if (date == null) return;
+    selectedData = date;
+    setState(() {});
   }
 
-  void addTask() {
-    if(myKey.currentState?.validate()==false)return ;
+  Future<void> addTask() async {
+    if (myKey.currentState?.validate() == false) return;
+
+    AuthUserProvider provider =
+        Provider.of<AuthUserProvider>(context, listen: false);
+    DialogUtils.showLoadingDialog(context: context);
+    await FirestoreHelper.addNewTask(
+        userId: provider.authUser!.uid,
+        task: Tasks(
+            title: titleController.text,
+            description: descriptionController.text,
+            date: Timestamp.fromMillisecondsSinceEpoch(selectedData.millisecondsSinceEpoch)));
+    DialogUtils.hidenDialog(context: context);
+    titleController.text = '';
+    descriptionController.text = '';
   }
 }

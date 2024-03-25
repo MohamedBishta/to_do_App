@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_list/Core/Utilites/dialog_Details.dart';
 import 'package:to_do_list/Core/Utilites/firebase_error_codes.dart';
 import 'package:to_do_list/Core/Utilites/myValidation.dart';
 import 'package:to_do_list/UI/Auth/register/registerScreen.dart';
 import 'package:to_do_list/UI/homePage.dart';
 
+import '../../../Core/Providers/AuthProvider.dart';
+import '../../../Core/firestore_helper.dart';
 import '../../Componant/CustomTextFormField.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -76,44 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10))),
                     onPressed: () async {
                       isValidate();
-                      try {
-                        DialogUtils.showLoadingDialog(context: context);
-                        final credential = await FirebaseAuth.instance
-                            .signInWithEmailAndPassword(
-                                email: emailController!.text.trim(),
-                                password: passwordController!.text);
-                        DialogUtils.hidenDialog(context: context);
-                        DialogUtils.showErrorDialog(
-                          context: context,
-                          message: 'Login Successfully ${credential.user!.uid}',
-                          positiveTitle: "ok",
-                          positiveClick: () {
-                            DialogUtils.hidenDialog(context: context);
-                            Navigator.pushReplacementNamed(context, HomePage.routeName);
-                          },
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        DialogUtils.hidenDialog(context: context);
-                        if (e.code == ErrorCodes.userNotFound) {
-                          DialogUtils.showErrorDialog(
-                              context: context,
-                              message: 'No user found for that email.',
-                              positiveTitle: "ok",
-                            positiveClick: () {
-                              DialogUtils.hidenDialog(context: context);
-                            },
-                              );
-                        } else if (e.code == ErrorCodes.wrongPassword) {
-                          DialogUtils.showErrorDialog(
-                            context: context,
-                            message: 'Wrong password provided for that user.',
-                            positiveTitle: "ok",
-                            positiveClick: () {
-                              DialogUtils.hidenDialog(context: context);
-                            },
-                          );
-                        }
-                      }
+                      await login();
                     },
                     child: Text(
                       "Login",
@@ -139,6 +105,49 @@ class _LoginScreenState extends State<LoginScreen> {
   void isValidate() {
     if (formKey.currentState?.validate() == false) {
       return;
+    }
+  }
+  Future <void> login() async{
+    try {
+      AuthUserProvider provider = Provider.of<AuthUserProvider>(context,listen: false);
+      DialogUtils.showLoadingDialog(context: context);
+      final credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+          email: emailController!.text.trim(),
+          password: passwordController!.text);
+      provider.authUser = credential.user;
+      provider.databaseUser = await FirestoreHelper.getUser(credential.user!.uid);
+      DialogUtils.hidenDialog(context: context);
+      DialogUtils.showErrorDialog(
+        context: context,
+        message: 'Login Successfully ${credential.user!.uid}',
+        positiveTitle: "ok",
+        positiveClick: () {
+          DialogUtils.hidenDialog(context: context);
+          Navigator.pushReplacementNamed(context, HomePage.routeName);
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      DialogUtils.hidenDialog(context: context);
+      if (e.code == ErrorCodes.userNotFound) {
+        DialogUtils.showErrorDialog(
+          context: context,
+          message: 'No user found for that email.',
+          positiveTitle: "ok",
+          positiveClick: () {
+            DialogUtils.hidenDialog(context: context);
+          },
+        );
+      } else if (e.code == ErrorCodes.wrongPassword) {
+        DialogUtils.showErrorDialog(
+          context: context,
+          message: 'Wrong password provided for that user.',
+          positiveTitle: "ok",
+          positiveClick: () {
+            DialogUtils.hidenDialog(context: context);
+          },
+        );
+      }
     }
   }
 }
